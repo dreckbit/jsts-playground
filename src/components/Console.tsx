@@ -1,71 +1,154 @@
-import { useEffect, useRef } from "react";
-import type { ConsoleEntry } from "../stores/appStore";
+import { useMemo, useRef, useEffect, useState } from "react";
+import { Editor as MonacoEditor } from "@monaco-editor/react";
+import type { ConsoleEntry, Settings } from "../stores/appStore";
 import styles from "../styles/Console.module.css";
 
 interface ConsoleProps {
   entries: ConsoleEntry[];
   onClear: () => void;
-  executionTime?: number;
+  lineCount: number;
+  settings: Settings;
+  editorScrollTop?: number; // Scroll position from editor
 }
 
-export default function Console({ entries, onClear }: ConsoleProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+// Generate console output text with line-aligned entries
+function generateConsoleContent(entries: ConsoleEntry[], lineCount: number): string {
+  if (entries.length === 0) {
+    return "// Run your code to see output here";
+  }
 
-  useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
-    }
-  }, [entries]);
+  // Create an array of lines, starting empty
+  const lines: string[] = Array(lineCount).fill("");
 
-  const getEntryClassName = (type: ConsoleEntry["type"]) => {
-    switch (type) {
-      case "error":
-        return styles.error;
-      case "warn":
-        return styles.warn;
-      case "info":
-        return styles.info;
-      case "time":
-        return styles.time;
-      default:
-        return styles.log;
-    }
-  };
-
-  const formatContent = (content: unknown): string => {
-    if (content === null) return "null";
-    if (content === undefined) return "undefined";
-    if (typeof content === "object") {
-      try {
-        return JSON.stringify(content, null, 2);
-      } catch {
-        return String(content);
+  // Fill in the lines with console output
+  entries.forEach((entry) => {
+    if (entry.line && entry.line > 0 && entry.line <= lineCount) {
+      // Add prefix based on type
+      let prefix = "";
+      switch (entry.type) {
+        case "error":
+          prefix = "❌ ";
+          break;
+        case "warn":
+          prefix = "⚠️  ";
+          break;
+        case "info":
+          prefix = "ℹ️  ";
+          break;
+        case "time":
+          prefix = "⏱️ ";
+          break;
+        default:
+          prefix = "→ ";
       }
+      lines[entry.line - 1] = prefix + String(entry.content);
+    } else {
+      // For entries without line numbers (like execution time), add to the end
+      let prefix = "";
+      switch (entry.type) {
+        case "error":
+          prefix = "❌ ";
+          break;
+        case "warn":
+          prefix = "⚠️  ";
+          break;
+        case "info":
+          prefix = "ℹ️  ";
+          break;
+        case "time":
+          prefix = "⏱️ ";
+          break;
+        default:
+          prefix = "→ ";
+      }
+      lines.push(prefix + String(entry.content));
     }
-    return String(content);
+  });
+
+  return lines.join("\n");
+}
+
+export default function Console({ entries, onClear, lineCount, settings, editorScrollTop }: ConsoleProps) {
+  const editorRef = useRef<unknown>(null);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  
+  // Generate content for the console editor
+  const consoleContent = useMemo(() => {
+    return generateConsoleContent(entries, lineCount);
+  }, [entries, lineCount]);
+
+  // Sync scroll with editor when linked and not user-scrolling
+  useEffect(() => {
+    if (!settings.consoleLinked || isUserScrolling || !editorScrollTop || !editorRef.current) return;
+
+    const editor = editorRef.current as {
+      setScrollTop?: (top: number) => void;
+    };
+    
+    if (editor && typeof editor.setScrollTop === "function") {
+      editor.setScrollTop(editorScrollTop);
+    }
+  }, [editorScrollTop, settings.consoleLinked, isUserScrolling]);
+
+  // Reset user scrolling when leaving console
+  useEffect(() => {
+    if (!isHovered) {
+      // Small delay to prevent immediate re-sync
+      const timeout = setTimeout(() => {
+        setIsUserScrolling(false);
+      }, 500);
+      return () => clearTimeout(timeout);
+    }
+  }, [isHovered]);
+
+  const handleEditorMount = (editor: unknown) => {
+    editorRef.current = editor;
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <span className={styles.title}>Console</span>
-        <button className={styles.clearButton} onClick={onClear}>
-          Clear
+    <div 
+      className={styles.container}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className={styles.editor}>
+        <MonacoEditor
+          height="100%"
+          language="plaintext"
+          value={consoleContent}
+          theme={settings.theme}
+          onMount={handleEditorMount}
+          options={{
+            readOnly: true,
+            minimap: { enabled: false },
+            fontSize: settings.fontSize,
+            fontFamily: settings.fontFamily,
+            lineNumbers: settings.showLineNumbers ? "on" : "off",
+            scrollBeyondLastLine: false,
+            automaticLayout: true,
+            wordWrap: "off",
+            padding: { top: 10, bottom: 40 },
+            renderLineHighlight: "none",
+            overviewRulerLanes: 0,
+            hideCursorInOverviewRuler: true,
+            scrollbar: {
+              vertical: "auto",
+              horizontal: "auto",
+              verticalScrollbarSize: 8,
+              horizontalScrollbarSize: 8,
+            },
+          }}
+        />
+        <button 
+          className={styles.clearButtonFloating} 
+          onClick={onClear}
+          title="Clear console"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
         </button>
-      </div>
-      <div className={styles.output} ref={containerRef}>
-        {entries.length === 0 ? (
-          <div className={styles.empty}>Run your code to see output here</div>
-        ) : (
-          entries.map((entry, index) => (
-            <div key={index} className={`${styles.entry} ${getEntryClassName(entry.type)}`}>
-              <span className={styles.timestamp}>
-                {entry.timestamp ? new Date(entry.timestamp).toLocaleTimeString() : ""}
-              </span>
-              <pre className={styles.content}>{formatContent(entry.content)}</pre>
-            </div>
-          ))
-        )}
       </div>
     </div>
   );

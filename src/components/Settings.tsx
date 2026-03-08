@@ -162,6 +162,37 @@ export default function Settings() {
           </div>
         </div>
       </div>
+
+      <div className={styles.section}>
+        <div className={styles.sectionTitle}>Display</div>
+        <div className={styles.field}>
+          <label className={styles.toggleLabel}>
+            <span>Show Line Numbers</span>
+            <button
+              className={`${styles.toggleSwitch} ${settings.showLineNumbers ? styles.toggleOn : ""}`}
+              onClick={() => updateSettings({ showLineNumbers: !settings.showLineNumbers })}
+              role="switch"
+              aria-checked={settings.showLineNumbers}
+            >
+              <span className={styles.toggleThumb} />
+            </button>
+          </label>
+        </div>
+        <div className={styles.field}>
+          <label className={styles.toggleLabel}>
+            <span>Link Console to Editor</span>
+            <button
+              className={`${styles.toggleSwitch} ${settings.consoleLinked ? styles.toggleOn : ""}`}
+              onClick={() => updateSettings({ consoleLinked: !settings.consoleLinked })}
+              role="switch"
+              aria-checked={settings.consoleLinked}
+            >
+              <span className={styles.toggleThumb} />
+            </button>
+          </label>
+          <p className={styles.hint}>Console follows editor scroll</p>
+        </div>
+      </div>
     </div>
   );
 }

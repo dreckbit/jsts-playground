@@ -18,6 +18,8 @@ const DEFAULT_SETTINGS: Settings = {
   tabSize: 2,
   layoutOrientation: "horizontal",
   editorRatio: 50,
+  showLineNumbers: true,
+  consoleLinked: true,
 };
 
 export function usePersistence() {

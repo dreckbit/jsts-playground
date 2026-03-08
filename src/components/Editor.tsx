@@ -1,5 +1,5 @@
 import { Editor as MonacoEditor } from "@monaco-editor/react";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useCallback } from "react";
 import type { Language, Settings } from "../stores/appStore";
 import styles from "../styles/Editor.module.css";
 
@@ -8,6 +8,7 @@ interface EditorProps {
   language: Language;
   onChange: (value: string | undefined) => void;
   settings: Settings;
+  onScroll?: (scrollTop: number) => void;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -120,7 +121,7 @@ const THEMES: Record<string, MonacoTheme> = {
   },
 };
 
-export default function Editor({ value, language, onChange, settings }: EditorProps) {
+export default function Editor({ value, language, onChange, settings, onScroll }: EditorProps) {
   const editorRef = useRef<unknown>(null);
   const monacoRef = useRef<unknown>(null);
 
@@ -139,9 +140,25 @@ export default function Editor({ value, language, onChange, settings }: EditorPr
     }
   }, [settings.theme]);
 
+  const handleScroll = useCallback((_e: unknown) => {
+    if (onScroll && editorRef.current) {
+      const editor = editorRef.current as {
+        getScrollTop?: () => number;
+      };
+      if (editor && typeof editor.getScrollTop === "function") {
+        onScroll(editor.getScrollTop());
+      }
+    }
+  }, [onScroll]);
+
   const handleEditorDidMount = (editor: unknown, monaco: unknown) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
+
+    // Add scroll listener
+    if (editor && typeof editor === "object" && "onDidScrollChange" in editor) {
+      (editor as { onDidScrollChange: (cb: (e: unknown) => void) => void }).onDidScrollChange(handleScroll);
+    }
 
     if (monaco && typeof monaco === "object" && "editor" in monaco) {
       const monacoEditor = monaco as {
@@ -170,7 +187,7 @@ export default function Editor({ value, language, onChange, settings }: EditorPr
           minimap: { enabled: false },
           fontSize: settings.fontSize,
           fontFamily: settings.fontFamily,
-          lineNumbers: "on",
+          lineNumbers: settings.showLineNumbers ? "on" : "off",
           scrollBeyondLastLine: false,
           automaticLayout: true,
           tabSize: settings.tabSize,

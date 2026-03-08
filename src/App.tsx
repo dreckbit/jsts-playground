@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import Editor from "./components/Editor";
 import Console from "./components/Console";
 import Toolbar from "./components/Toolbar";
@@ -19,6 +19,11 @@ function App() {
     document.documentElement.setAttribute("data-theme", settings.theme);
   }, [settings.theme]);
 
+  // Calculate line count from code
+  const codeLineCount = useMemo(() => {
+    return Math.max(code.split("\n").length, 10);
+  }, [code]);
+
   const handleCodeChange = useCallback(
     (value: string | undefined) => {
       setCode(value || "");
@@ -29,6 +34,13 @@ function App() {
   const handleClear = useCallback(() => {
     clearConsole();
   }, [clearConsole]);
+
+  // Editor scroll position for linking with console
+  const [editorScrollTop, setEditorScrollTop] = useState(0);
+
+  const handleEditorScroll = useCallback((scrollTop: number) => {
+    setEditorScrollTop(scrollTop);
+  }, []);
 
   // Resizable divider logic
   const containerRef = useRef<HTMLDivElement>(null);
@@ -102,6 +114,7 @@ function App() {
             value={code}
             language={language}
             onChange={handleCodeChange}
+            onScroll={handleEditorScroll}
             settings={settings}
           />
         </div>
@@ -117,7 +130,13 @@ function App() {
         </div>
         
         <div className={styles.consolePanel} style={consoleStyle}>
-          <Console entries={consoleOutput} onClear={handleClear} />
+          <Console 
+            entries={consoleOutput} 
+            onClear={handleClear} 
+            lineCount={codeLineCount}
+            settings={settings}
+            editorScrollTop={editorScrollTop}
+          />
         </div>
       </div>
     </div>

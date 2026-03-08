@@ -11,6 +11,7 @@ export interface ConsoleEntry {
   type: ConsoleEntryType;
   content: string | number | object | null;
   timestamp?: number;
+  line?: number; // Line number where console.* was called
 }
 
 export interface Settings {
@@ -22,6 +23,8 @@ export interface Settings {
   tabSize: number;
   layoutOrientation: LayoutOrientation;
   editorRatio: number; // percentage 0-100
+  showLineNumbers: boolean; // show line numbers in editor and console
+  consoleLinked: boolean; // console follows editor scroll by default
 }
 
 export interface AppState {
@@ -63,6 +66,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     tabSize: 2,
     layoutOrientation: "horizontal",
     editorRatio: 50,
+    showLineNumbers: true,
+    consoleLinked: true,
   },
 
   setCode: (code) => set({ code }),
@@ -93,6 +98,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     state.clearConsole();
 
     const startTime = performance.now();
+    const originalSource = state.code;
 
     try {
       let codeToRun = state.code;
@@ -108,6 +114,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                 ? `TypeScript Error (${error.line}:${error.column}): ${error.message}`
                 : `TypeScript Error: ${error.message}`,
               timestamp: Date.now(),
+              line: error.line,
             });
           });
           state.setExecuting(false);
@@ -117,7 +124,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         codeToRun = transpileResult.output;
       }
 
-      const result = await executeInSandbox(codeToRun, 5000);
+      const result = await executeInSandbox(codeToRun, 5000, originalSource);
 
       result.consoleOutput.forEach((entry) => {
         state.addConsoleEntry(entry);
@@ -128,6 +135,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           type: "error",
           content: result.error.message,
           timestamp: Date.now(),
+          line: result.error.line,
         });
       }
 

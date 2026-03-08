@@ -3,6 +3,7 @@ import * as ts from "typescript";
 export interface TranspileResult {
   success: boolean;
   output: string;
+  sourceMap?: string;
   errors: Array<{
     message: string;
     line?: number;
@@ -59,12 +60,16 @@ export function transpileTypeScript(code: string): TranspileResult {
         target: ts.ScriptTarget.ES2022,
         strict: true,
         esModuleInterop: true,
+        sourceMap: true,
+        inlineSources: true,
       },
+      reportDiagnostics: false,
     });
 
     return {
       success: true,
       output: result.outputText,
+      sourceMap: result.sourceMapText,
       errors: [],
     };
   } catch (error) {
@@ -78,4 +83,20 @@ export function transpileTypeScript(code: string): TranspileResult {
       ],
     };
   }
+}
+
+// Parse original TypeScript code to find console.* line numbers
+export function getConsoleLineNumbers(code: string): Map<number, number> {
+  const lineMap = new Map<number, number>();
+  
+  const lines = code.split("\n");
+  lines.forEach((line, index) => {
+    const lineNumber = index + 1;
+    // Match console.log(, console.error(, etc.
+    if (/console\.\w+\s*\(/.test(line)) {
+      lineMap.set(lineNumber, lineNumber);
+    }
+  });
+  
+  return lineMap;
 }
