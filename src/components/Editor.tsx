@@ -9,6 +9,11 @@ interface EditorProps {
   onChange: (value: string | undefined) => void;
   settings: Settings;
   onScroll?: (scrollTop: number) => void;
+  errors?: Array<{
+    line: number;
+    column: number;
+    message: string;
+  }>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -121,7 +126,7 @@ const THEMES: Record<string, MonacoTheme> = {
   },
 };
 
-export default function Editor({ value, language, onChange, settings, onScroll }: EditorProps) {
+export default function Editor({ value, language, onChange, settings, onScroll, errors = [] }: EditorProps) {
   const editorRef = useRef<unknown>(null);
   const monacoRef = useRef<unknown>(null);
 
@@ -139,6 +144,35 @@ export default function Editor({ value, language, onChange, settings, onScroll }
       monaco.editor.setTheme(settings.theme);
     }
   }, [settings.theme]);
+
+  // Update error markers when errors change
+  useEffect(() => {
+    if (!editorRef.current || !monacoRef.current) return;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const editor = editorRef.current as any;
+    const model = editor.getModel?.();
+
+    if (model && editor.deltaDecorations) {
+      // Create error decorations
+      const newDecorations = errors.map((error) => ({
+        range: {
+          startLineNumber: error.line,
+          startColumn: error.column,
+          endLineNumber: error.line,
+          endColumn: error.column + 1,
+        },
+        options: {
+          className: styles.errorLine,
+          hoverMessage: { value: `❌ ${error.message}` },
+          glyphMarginClassName: styles.errorGlyph,
+        },
+      }));
+
+      // Clear old decorations and apply new ones
+      editor.deltaDecorations([], newDecorations);
+    }
+  }, [errors]);
 
   const handleScroll = useCallback((_e: unknown) => {
     if (onScroll && editorRef.current) {

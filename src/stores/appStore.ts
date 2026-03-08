@@ -27,6 +27,14 @@ export interface Settings {
   consoleLinked: boolean; // console follows editor scroll by default
 }
 
+export interface WindowState {
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+  maximized: boolean;
+}
+
 export interface AppState {
   code: string;
   language: Language;
@@ -34,6 +42,11 @@ export interface AppState {
   isExecuting: boolean;
   settings: Settings;
   showSettings: boolean;
+  tsErrors: Array<{
+    line: number;
+    column: number;
+    message: string;
+  }>;
   setCode: (code: string) => void;
   setLanguage: (lang: Language) => void;
   addConsoleEntry: (entry: ConsoleEntry) => void;
@@ -41,6 +54,7 @@ export interface AppState {
   setExecuting: (executing: boolean) => void;
   updateSettings: (settings: Partial<Settings>) => void;
   toggleSettings: () => void;
+  setTsErrors: (errors: AppState["tsErrors"]) => void;
   runCode: () => void;
 }
 
@@ -57,6 +71,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   consoleOutput: [],
   isExecuting: false,
   showSettings: false,
+  tsErrors: [],
   settings: {
     debounceDelay: 1000,
     showTimestamps: true,
@@ -82,6 +97,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   clearConsole: () => set({ consoleOutput: [] }),
 
   setExecuting: (isExecuting) => set({ isExecuting }),
+
+  setTsErrors: (errors) => set({ tsErrors: errors }),
 
   updateSettings: (newSettings) =>
     set((state) => ({

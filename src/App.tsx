@@ -6,10 +6,22 @@ import Settings from "./components/Settings";
 import { useAppStore } from "./stores/appStore";
 import { useCodeExecution } from "./hooks/useCodeExecution";
 import { usePersistence } from "./hooks/usePersistence";
+import { transpileTypeScript } from "./utils/transpiler";
 import styles from "./styles/App.module.css";
 
 function App() {
-  const { code, language, consoleOutput, setCode, clearConsole, settings, updateSettings } = useAppStore();
+  const { 
+    code, 
+    language, 
+    consoleOutput, 
+    setCode, 
+    clearConsole, 
+    settings, 
+    updateSettings,
+    tsErrors,
+    setTsErrors,
+    runCode 
+  } = useAppStore();
 
   useCodeExecution();
   usePersistence();
@@ -19,6 +31,146 @@ function App() {
     document.documentElement.setAttribute("data-theme", settings.theme);
   }, [settings.theme]);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const MIN_FONT_SIZE = 10;
+    const MAX_FONT_SIZE = 30;
+    const ZOOM_STEP = 1;
+
+    const zoomIn = () => {
+      const currentSize = settings.fontSize;
+      const newSize = Math.min(currentSize + ZOOM_STEP, MAX_FONT_SIZE);
+      if (newSize !== currentSize) {
+        updateSettings({ fontSize: newSize });
+      }
+    };
+
+    const zoomOut = () => {
+      const currentSize = settings.fontSize;
+      const newSize = Math.max(currentSize - ZOOM_STEP, MIN_FONT_SIZE);
+      if (newSize !== currentSize) {
+        updateSettings({ fontSize: newSize });
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+Enter to run code
+      if (e.ctrlKey && e.key === "Enter") {
+        e.preventDefault();
+        runCode();
+      }
+      
+      // Ctrl+S to save (just triggers a manual save indication)
+      if (e.ctrlKey && e.key === "s") {
+        e.preventDefault();
+        console.log("Code auto-saved");
+      }
+
+      // Ctrl+L to clear console
+      if (e.ctrlKey && e.key === "l") {
+        e.preventDefault();
+        clearConsole();
+      }
+
+      // Ctrl++ or Ctrl+= to zoom in
+      if (e.ctrlKey && (e.key === "+" || e.key === "=")) {
+        e.preventDefault();
+        zoomIn();
+      }
+
+      // Ctrl+- to zoom out
+      if (e.ctrlKey && e.key === "-") {
+        e.preventDefault();
+        zoomOut();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [runCode, clearConsole, settings.fontSize, updateSettings]);
+
+  // Ctrl+Scroll to zoom font size
+  useEffect(() => {
+    const MIN_FONT_SIZE = 10;
+    const MAX_FONT_SIZE = 30;
+    const ZOOM_STEP = 1;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+        
+        const currentSize = settings.fontSize;
+        let newSize = currentSize;
+
+        if (e.deltaY < 0) {
+          // Zoom in
+          newSize = Math.min(currentSize + ZOOM_STEP, MAX_FONT_SIZE);
+        } else {
+          // Zoom out
+          newSize = Math.max(currentSize - ZOOM_STEP, MIN_FONT_SIZE);
+        }
+
+        if (newSize !== currentSize) {
+          updateSettings({ fontSize: newSize });
+        }
+      }
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    return () => window.removeEventListener("wheel", handleWheel);
+  }, [settings.fontSize, updateSettings]);
+
+  // Window size persistence - save on close/resize
+  useEffect(() => {
+    const STORAGE_KEY = "js-playground-window";
+    
+    const saveWindowState = () => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          width: window.innerWidth,
+          height: window.innerHeight,
+        }));
+      } catch {}
+    };
+
+    // Save on resize (debounced)
+    let resizeTimeout: ReturnType<typeof setTimeout>;
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(saveWindowState, 500);
+    };
+
+    window.addEventListener("resize", handleResize);
+    
+    // Save periodically while app is running
+    const periodicSave = setInterval(saveWindowState, 5000);
+
+    // Save before closing - use pagehide which works better
+    const handleBeforeUnload = () => {
+      saveWindowState();
+    };
+    window.addEventListener("pagehide", handleBeforeUnload);
+
+    // Restore window size on load
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const { width, height } = JSON.parse(saved);
+        // Small delay to ensure window is ready
+        setTimeout(() => {
+          window.resizeTo(width, height);
+        }, 100);
+      } catch {}
+    }
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("pagehide", handleBeforeUnload);
+      clearInterval(periodicSave);
+      clearTimeout(resizeTimeout);
+    };
+  }, []);
+
   // Calculate line count from code
   const codeLineCount = useMemo(() => {
     return Math.max(code.split("\n").length, 10);
@@ -27,8 +179,24 @@ function App() {
   const handleCodeChange = useCallback(
     (value: string | undefined) => {
       setCode(value || "");
+      
+      // Check for TypeScript errors in real-time
+      if (language === "typescript" && value) {
+        const result = transpileTypeScript(value);
+        if (!result.success && result.errors.length > 0) {
+          setTsErrors(result.errors.map(e => ({
+            line: e.line || 1,
+            column: e.column || 1,
+            message: e.message,
+          })));
+        } else {
+          setTsErrors([]);
+        }
+      } else {
+        setTsErrors([]);
+      }
     },
-    [setCode]
+    [setCode, language, setTsErrors]
   );
 
   const handleClear = useCallback(() => {
@@ -116,6 +284,7 @@ function App() {
             onChange={handleCodeChange}
             onScroll={handleEditorScroll}
             settings={settings}
+            errors={tsErrors}
           />
         </div>
         

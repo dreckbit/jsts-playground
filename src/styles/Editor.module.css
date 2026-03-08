@@ -3,3 +3,16 @@
   width: 100%;
   background-color: var(--bg-primary);
 }
+
+/* Error line highlighting */
+.errorLine {
+  background-color: rgba(191, 97, 106, 0.2) !important;
+}
+
+/* Error glyph in gutter */
+.errorGlyph {
+  background-color: var(--status-error);
+  margin-left: 3px;
+  width: 4px !important;
+  border-radius: 2px;
+}
