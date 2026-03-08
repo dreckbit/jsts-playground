@@ -1,0 +1,178 @@
+:root {
+  /* Nord Theme (Dark) */
+  --nord0: #2E3440;
+  --nord1: #3B4252;
+  --nord2: #434C5E;
+  --nord3: #4C566A;
+  --nord4: #D8DEE9;
+  --nord5: #E5E9F0;
+  --nord6: #ECEFF4;
+  --nord7: #8FBCBB;
+  --nord8: #88C0D0;
+  --nord9: #81A1C1;
+  --nord10: #5E81AC;
+  --nord11: #BF616A;
+  --nord12: #D08770;
+  --nord13: #EBCB8B;
+  --nord14: #A3BE8C;
+  --nord15: #B48EAD;
+
+  --bg-primary: var(--nord0);
+  --bg-secondary: var(--nord1);
+  --bg-tertiary: var(--nord2);
+  --bg-hover: var(--nord3);
+
+  --text-primary: var(--nord4);
+  --text-secondary: var(--nord5);
+  --text-muted: var(--nord3);
+
+  --accent-primary: var(--nord8);
+  --accent-secondary: var(--nord9);
+  --accent-tertiary: var(--nord10);
+
+  --status-error: var(--nord11);
+  --status-warn: var(--nord13);
+  --status-success: var(--nord14);
+  --status-info: var(--nord9);
+
+  --border-color: var(--nord3);
+  --scrollbar-thumb: var(--nord3);
+  --scrollbar-track: var(--nord0);
+  --divider-color: var(--nord3);
+  --divider-hover: var(--nord8);
+}
+
+/* Theme: Nord Polar Night (Default Dark) */
+[data-theme="nord"],
+[data-theme="nord-polar-night"] {
+  --bg-primary: #2E3440;
+  --bg-secondary: #3B4252;
+  --bg-tertiary: #434C5E;
+  --bg-hover: #4C566A;
+
+  --text-primary: #D8DEE9;
+  --text-secondary: #E5E9F0;
+  --text-muted: #4C566A;
+
+  --accent-primary: #88C0D0;
+  --accent-secondary: #81A1C1;
+  --accent-tertiary: #5E81AC;
+
+  --status-error: #BF616A;
+  --status-warn: #EBCB8B;
+  --status-success: #A3BE8C;
+  --status-info: #81A1C1;
+
+  --border-color: #4C566A;
+  --scrollbar-thumb: #4C566A;
+  --scrollbar-track: #2E3440;
+  --divider-color: #4C566A;
+  --divider-hover: #88C0D0;
+}
+
+/* Theme: Nord Snow Storm (Light) */
+[data-theme="nord-snow-storm"] {
+  --bg-primary: #ECEFF4;
+  --bg-secondary: #E5E9F0;
+  --bg-tertiary: #D8DEE9;
+  --bg-hover: #4C566A;
+
+  --text-primary: #2E3440;
+  --text-secondary: #3B4252;
+  --text-muted: #4C566A;
+
+  --accent-primary: #5E81AC;
+  --accent-secondary: #81A1C1;
+  --accent-tertiary: #88C0D0;
+
+  --status-error: #BF616A;
+  --status-warn: #D08770;
+  --status-success: #A3BE8C;
+  --status-info: #5E81AC;
+
+  --border-color: #D8DEE9;
+  --scrollbar-thumb: #4C566A;
+  --scrollbar-track: #ECEFF4;
+  --divider-color: #D8DEE9;
+  --divider-hover: #5E81AC;
+}
+
+/* Theme: VS Dark */
+[data-theme="vs-dark"] {
+  --bg-primary: #1E1E1E;
+  --bg-secondary: #252526;
+  --bg-tertiary: #2D2D2D;
+  --bg-hover: #3C3C3C;
+
+  --text-primary: #D4D4D4;
+  --text-secondary: #CCCCCC;
+  --text-muted: #858585;
+
+  --accent-primary: #569CD6;
+  --accent-secondary: #4FC1FF;
+  --accent-tertiary: #C586C0;
+
+  --status-error: #F14C4C;
+  --status-warn: #CCA700;
+  --status-success: #4EC9B0;
+  --status-info: #569CD6;
+
+  --border-color: #3C3C3C;
+  --scrollbar-thumb: #424242;
+  --scrollbar-track: #1E1E1E;
+  --divider-color: #3C3C3C;
+  --divider-hover: #569CD6;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--bg-tertiary);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+input,
+select {
+  font-family: inherit;
+  outline: none;
+}

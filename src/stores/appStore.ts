@@ -1,0 +1,150 @@
+import { create } from "zustand";
+import { transpileTypeScript } from "../utils/transpiler";
+import { executeInSandbox } from "../utils/sandbox";
+
+export type Language = "javascript" | "typescript";
+export type ConsoleEntryType = "log" | "error" | "warn" | "info" | "result" | "time";
+export type EditorTheme = "nord" | "nord-polar-night" | "nord-snow-storm" | "vs-dark";
+export type LayoutOrientation = "horizontal" | "vertical";
+
+export interface ConsoleEntry {
+  type: ConsoleEntryType;
+  content: string | number | object | null;
+  timestamp?: number;
+}
+
+export interface Settings {
+  debounceDelay: number;
+  showTimestamps: boolean;
+  theme: EditorTheme;
+  fontSize: number;
+  fontFamily: string;
+  tabSize: number;
+  layoutOrientation: LayoutOrientation;
+  editorRatio: number; // percentage 0-100
+}
+
+export interface AppState {
+  code: string;
+  language: Language;
+  consoleOutput: ConsoleEntry[];
+  isExecuting: boolean;
+  settings: Settings;
+  showSettings: boolean;
+  setCode: (code: string) => void;
+  setLanguage: (lang: Language) => void;
+  addConsoleEntry: (entry: ConsoleEntry) => void;
+  clearConsole: () => void;
+  setExecuting: (executing: boolean) => void;
+  updateSettings: (settings: Partial<Settings>) => void;
+  toggleSettings: () => void;
+  runCode: () => void;
+}
+
+const DEFAULT_CODE = `// Welcome to JS/TS Playground!
+// Write TypeScript or JavaScript code here
+// Code executes automatically in real-time
+
+console.log("Hello, World!");
+`;
+
+export const useAppStore = create<AppState>((set, get) => ({
+  code: DEFAULT_CODE,
+  language: "javascript",
+  consoleOutput: [],
+  isExecuting: false,
+  showSettings: false,
+  settings: {
+    debounceDelay: 1000,
+    showTimestamps: true,
+    theme: "nord",
+    fontSize: 14,
+    fontFamily: "JetBrains Mono, Fira Code, Consolas, monospace",
+    tabSize: 2,
+    layoutOrientation: "horizontal",
+    editorRatio: 50,
+  },
+
+  setCode: (code) => set({ code }),
+
+  setLanguage: (language) => set({ language }),
+
+  addConsoleEntry: (entry) =>
+    set((state) => ({
+      consoleOutput: [...state.consoleOutput, entry],
+    })),
+
+  clearConsole: () => set({ consoleOutput: [] }),
+
+  setExecuting: (isExecuting) => set({ isExecuting }),
+
+  updateSettings: (newSettings) =>
+    set((state) => ({
+      settings: { ...state.settings, ...newSettings },
+    })),
+
+  toggleSettings: () => set((state) => ({ showSettings: !state.showSettings })),
+
+  runCode: async () => {
+    const state = get();
+    if (state.isExecuting) return;
+
+    state.setExecuting(true);
+    state.clearConsole();
+
+    const startTime = performance.now();
+
+    try {
+      let codeToRun = state.code;
+
+      if (state.language === "typescript") {
+        const transpileResult = transpileTypeScript(state.code);
+
+        if (!transpileResult.success) {
+          transpileResult.errors.forEach((error) => {
+            state.addConsoleEntry({
+              type: "error",
+              content: error.line
+                ? `TypeScript Error (${error.line}:${error.column}): ${error.message}`
+                : `TypeScript Error: ${error.message}`,
+              timestamp: Date.now(),
+            });
+          });
+          state.setExecuting(false);
+          return;
+        }
+
+        codeToRun = transpileResult.output;
+      }
+
+      const result = await executeInSandbox(codeToRun, 5000);
+
+      result.consoleOutput.forEach((entry) => {
+        state.addConsoleEntry(entry);
+      });
+
+      if (result.error) {
+        state.addConsoleEntry({
+          type: "error",
+          content: result.error.message,
+          timestamp: Date.now(),
+        });
+      }
+
+      const executionTime = performance.now() - startTime;
+      state.addConsoleEntry({
+        type: "time",
+        content: `Execution time: ${executionTime.toFixed(2)}ms`,
+        timestamp: Date.now(),
+      });
+    } catch (error) {
+      state.addConsoleEntry({
+        type: "error",
+        content: error instanceof Error ? error.message : String(error),
+        timestamp: Date.now(),
+      });
+    } finally {
+      state.setExecuting(false);
+    }
+  },
+}));
