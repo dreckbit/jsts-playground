@@ -35,8 +35,10 @@ pub fn run() {
                         .build(),
                 )?;
             }
+
             let window = app.get_webview_window("main").unwrap();
             window.set_title("JS/TS Playground").ok();
+
             Ok(())
         })
         .run(tauri::generate_context!())
