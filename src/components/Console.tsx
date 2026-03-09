@@ -242,7 +242,11 @@ function generateConsoleContent(entries: ConsoleEntry[], lineCount: number): str
         default:
           prefix = "→ ";
       }
-      lines[entry.line - 1] = prefix + String(entry.content);
+      // Use += to append if multiple console.log() on same line
+      const existing = lines[entry.line - 1];
+      const newline = "\n";
+      const newContent = existing ? existing + newline + prefix + String(entry.content) : prefix + String(entry.content);
+      lines[entry.line - 1] = newContent;
     } else {
       // For entries without line numbers (like execution time), add to the end
       let prefix = "";
