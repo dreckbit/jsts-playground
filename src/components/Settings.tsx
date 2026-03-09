@@ -9,8 +9,7 @@ export default function Settings() {
   if (!showSettings) return null;
 
   const themes: { id: EditorTheme; name: string; colors: string[] }[] = [
-    { id: "nord", name: "Nord", colors: ["#2E3440", "#3B4252", "#88C0D0"] },
-    { id: "nord-polar-night", name: "Polar Night", colors: ["#2E3440", "#3B4252", "#434C5E"] },
+    { id: "nord", name: "Nord", colors: ["#292E39", "#3B4252", "#88C0D0"] },
     { id: "nord-snow-storm", name: "Snow Storm", colors: ["#ECEFF4", "#E5E9F0", "#D8DEE9"] },
     { id: "vs-dark", name: "VS Dark", colors: ["#1E1E1E", "#252526", "#569CD6"] },
   ];

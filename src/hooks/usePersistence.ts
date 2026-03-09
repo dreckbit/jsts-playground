@@ -34,8 +34,16 @@ export function usePersistence() {
         const parsed: SavedState = JSON.parse(saved);
         setCode(parsed.code);
         setLanguage(parsed.language);
-        // Merge with defaults to handle new settings
-        updateSettings({ ...DEFAULT_SETTINGS, ...parsed.settings });
+        
+        const mergedSettings = { ...DEFAULT_SETTINGS, ...parsed.settings };
+
+        // Keep user-selected theme if valid; default to nord otherwise
+        const validThemes = ["nord", "nord-polar-night", "nord-snow-storm", "vs-dark"] as const;
+        if (!validThemes.includes(mergedSettings.theme)) {
+          mergedSettings.theme = "nord";
+        }
+
+        updateSettings(mergedSettings);
       }
     } catch (error) {
       console.error("Failed to load saved state:", error);

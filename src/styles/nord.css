@@ -17,35 +17,8 @@
   --nord14: #A3BE8C;
   --nord15: #B48EAD;
 
-  --bg-primary: var(--nord0);
-  --bg-secondary: var(--nord1);
-  --bg-tertiary: var(--nord2);
-  --bg-hover: var(--nord3);
-
-  --text-primary: var(--nord4);
-  --text-secondary: var(--nord5);
-  --text-muted: var(--nord3);
-
-  --accent-primary: var(--nord8);
-  --accent-secondary: var(--nord9);
-  --accent-tertiary: var(--nord10);
-
-  --status-error: var(--nord11);
-  --status-warn: var(--nord13);
-  --status-success: var(--nord14);
-  --status-info: var(--nord9);
-
-  --border-color: var(--nord3);
-  --scrollbar-thumb: var(--nord3);
-  --scrollbar-track: var(--nord0);
-  --divider-color: var(--nord3);
-  --divider-hover: var(--nord8);
-}
-
-/* Theme: Nord Polar Night (Default Dark) */
-[data-theme="nord"],
-[data-theme="nord-polar-night"] {
-  --bg-primary: #2E3440;
+  /* UI Colors - Nord dark theme */
+  --bg-primary: #292E39;
   --bg-secondary: #3B4252;
   --bg-tertiary: #434C5E;
   --bg-hover: #4C566A;
@@ -64,8 +37,35 @@
   --status-info: #81A1C1;
 
   --border-color: #4C566A;
-  --scrollbar-thumb: #4C566A;
-  --scrollbar-track: #2E3440;
+  --scrollbar-thumb: #3B4252;
+  --scrollbar-track: #292E39;
+  --divider-color: #4C566A;
+  --divider-hover: #88C0D0;
+}
+
+/* Theme: Nord Dark */
+[data-theme="nord"] {
+  --bg-primary: #292E39;
+  --bg-secondary: #3B4252;
+  --bg-tertiary: #434C5E;
+  --bg-hover: #4C566A;
+
+  --text-primary: #D8DEE9;
+  --text-secondary: #E5E9F0;
+  --text-muted: #4C566A;
+
+  --accent-primary: #88C0D0;
+  --accent-secondary: #81A1C1;
+  --accent-tertiary: #5E81AC;
+
+  --status-error: #BF616A;
+  --status-warn: #EBCB8B;
+  --status-success: #A3BE8C;
+  --status-info: #81A1C1;
+
+  --border-color: #4C566A;
+  --scrollbar-thumb: #3B4252;
+  --scrollbar-track: #292E39;
   --divider-color: #4C566A;
   --divider-hover: #88C0D0;
 }
@@ -157,7 +157,7 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb);
-  border-radius: 4px;
+  border-radius: 7px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
