@@ -1,5 +1,10 @@
 import { useEffect, useRef, useCallback } from "react";
-import { useAppStore, type Language, type Settings } from "../stores/appStore";
+import {
+  useAppStore,
+  type AppState,
+  type Language,
+  type Settings,
+} from "../stores/appStore";
 
 const STORAGE_KEY = "js-ts-playground-state";
 
@@ -8,6 +13,8 @@ interface SavedState {
   language: Language;
   settings: Settings;
 }
+
+type PersistedSnapshot = Pick<AppState, "code" | "language" | "settings">;
 
 const DEFAULT_SETTINGS: Settings = {
   debounceDelay: 1000,
@@ -26,6 +33,8 @@ export function usePersistence() {
   const { code, language, settings, setCode, setLanguage, updateSettings } = useAppStore();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isInitialLoad = useRef(true);
+  const previousThemeRef = useRef(settings.theme);
+  const latestSnapshotRef = useRef<PersistedSnapshot>({ code, language, settings });
 
   const loadState = useCallback(() => {
     try {
@@ -50,23 +59,27 @@ export function usePersistence() {
     }
   }, [setCode, setLanguage, updateSettings]);
 
-  const saveState = useCallback(() => {
+  const saveState = useCallback((snapshot: PersistedSnapshot = latestSnapshotRef.current) => {
     try {
       const state: SavedState = {
-        code,
-        language,
-        settings,
+        code: snapshot.code,
+        language: snapshot.language,
+        settings: snapshot.settings,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (error) {
       console.error("Failed to save state:", error);
     }
-  }, [code, language, settings]);
+  }, []);
 
   useEffect(() => {
     loadState();
     isInitialLoad.current = false;
   }, []);
+
+  useEffect(() => {
+    latestSnapshotRef.current = { code, language, settings };
+  }, [code, language, settings]);
 
   useEffect(() => {
     if (isInitialLoad.current) return;
@@ -85,6 +98,44 @@ export function usePersistence() {
       }
     };
   }, [code, language, settings, saveState]);
+
+  useEffect(() => {
+    if (isInitialLoad.current) {
+      previousThemeRef.current = settings.theme;
+      return;
+    }
+
+    if (settings.theme !== previousThemeRef.current) {
+      saveState();
+      previousThemeRef.current = settings.theme;
+    }
+  }, [settings.theme, saveState]);
+
+  useEffect(() => {
+    const forceSave = () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      saveState();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        forceSave();
+      }
+    };
+
+    window.addEventListener("beforeunload", forceSave);
+    window.addEventListener("pagehide", forceSave);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("beforeunload", forceSave);
+      window.removeEventListener("pagehide", forceSave);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [saveState]);
 
   const clearSavedData = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
