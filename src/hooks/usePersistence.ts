@@ -47,7 +47,7 @@ export function usePersistence() {
         const mergedSettings = { ...DEFAULT_SETTINGS, ...parsed.settings };
 
         // Keep user-selected theme if valid; default to nord otherwise
-        const validThemes = ["nord", "nord-polar-night", "nord-snow-storm", "vs-dark"] as const;
+        const validThemes = ["nord", "nord-snow-storm", "vs-dark"] as const;
         if (!validThemes.includes(mergedSettings.theme)) {
           mergedSettings.theme = "nord";
         }
@@ -99,17 +99,26 @@ export function usePersistence() {
     };
   }, [code, language, settings, saveState]);
 
+  // IMMEDIATE save when theme changes - no debounce
   useEffect(() => {
+    // Skip initial mount - loadState handles initial load
     if (isInitialLoad.current) {
       previousThemeRef.current = settings.theme;
       return;
     }
 
+    // Only save if theme actually changed
     if (settings.theme !== previousThemeRef.current) {
-      saveState();
+      // Save IMMEDIATELY for theme changes - pass current state explicitly
+      const currentState: SavedState = {
+        code,
+        language,
+        settings,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(currentState));
       previousThemeRef.current = settings.theme;
     }
-  }, [settings.theme, saveState]);
+  }, [settings.theme, code, language, settings]);
 
   useEffect(() => {
     const forceSave = () => {

@@ -4,7 +4,7 @@ import { executeInSandbox } from "../utils/sandbox";
 
 export type Language = "javascript" | "typescript";
 export type ConsoleEntryType = "log" | "error" | "warn" | "info" | "result" | "time";
-export type EditorTheme = "nord" | "nord-polar-night" | "nord-snow-storm" | "vs-dark";
+export type EditorTheme = "nord" | "nord-snow-storm" | "vs-dark";
 export type LayoutOrientation = "horizontal" | "vertical";
 
 export interface ConsoleEntry {
@@ -65,6 +65,27 @@ const DEFAULT_CODE = `// Welcome to JS/TS Playground!
 console.log("Hello, World!");
 `;
 
+const STORAGE_KEY = "js-ts-playground-state";
+const VALID_THEMES: EditorTheme[] = ["nord", "nord-snow-storm", "vs-dark"];
+
+// Read saved theme from localStorage synchronously at module load time
+// so Zustand initializes with the correct theme before first render
+function getInitialTheme(): EditorTheme {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      const theme = parsed?.settings?.theme;
+      if (theme && VALID_THEMES.includes(theme)) {
+        return theme as EditorTheme;
+      }
+    }
+  } catch {
+    // ignore parse errors
+  }
+  return "nord";
+}
+
 export const useAppStore = create<AppState>((set, get) => ({
   code: DEFAULT_CODE,
   language: "javascript",
@@ -75,7 +96,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   settings: {
     debounceDelay: 1000,
     showTimestamps: true,
-    theme: "nord",
+    theme: getInitialTheme(),
     fontSize: 14,
     fontFamily: "JetBrains Mono, Fira Code, Consolas, monospace",
     tabSize: 2,

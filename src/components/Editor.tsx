@@ -362,10 +362,10 @@ export default function Editor({ value, language, onChange, settings, onScroll, 
         height="100%"
         language={language}
         value={value}
+        theme={settings.theme}
         onChange={onChange}
         beforeMount={handleEditorBeforeMount}
         onMount={handleEditorDidMount}
-        // Theme is defined in beforeMount to ensure it loads before render
         options={{
           minimap: { enabled: false },
           fontSize: settings.fontSize,

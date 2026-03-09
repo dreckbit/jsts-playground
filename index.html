@@ -6,16 +6,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JS/TS Playground</title>
     <style>
-      /* Prevent white flash on load */
-      html, body {
+      /* CRITICAL: Force background before anything else loads */
+      html, body, #root {
         background-color: #292E39 !important;
         margin: 0;
         padding: 0;
+        height: 100%;
+        width: 100%;
       }
-      #root {
-        background-color: #292E39;
+      body {
+        color: #D8DEE9;
       }
     </style>
+    <script>
+      // Apply saved theme BEFORE React renders - NO DEPENDENCIES
+      (function() {
+        var STORAGE_KEY = 'js-ts-playground-state';
+        var VALID_THEMES = ['nord', 'nord-snow-storm', 'vs-dark'];
+        var BG_MAP = {
+          'nord': '#292E39',
+          'nord-snow-storm': '#ECEFF4',
+          'vs-dark': '#1E1E1E'
+        };
+        
+        var theme = 'nord'; // default
+        try {
+          var saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) {
+            var parsed = JSON.parse(saved);
+            var savedTheme = parsed && parsed.settings && parsed.settings.theme;
+            if (savedTheme && VALID_THEMES.indexOf(savedTheme) !== -1) {
+              theme = savedTheme;
+            }
+          }
+        } catch(e) {
+          // use default
+        }
+        
+        // Always set data-theme attribute
+        document.documentElement.setAttribute('data-theme', theme);
+        
+        // Always set background - CRITICAL for preventing white flash
+        var bg = BG_MAP[theme] || '#292E39';
+        document.documentElement.style.backgroundColor = bg;
+        document.body && (document.body.style.backgroundColor = bg);
+        var root = document.getElementById('root');
+        root && (root.style.backgroundColor = bg);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

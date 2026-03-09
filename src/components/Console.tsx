@@ -372,6 +372,7 @@ export default function Console({ entries, onClear, lineCount, settings, editorS
           height="100%"
           language="plaintext"
           value={consoleContent}
+          theme={settings.theme}
           beforeMount={handleEditorBeforeMount}
           onMount={handleEditorMount}
           options={{
