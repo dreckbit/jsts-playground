@@ -155,7 +155,7 @@ export async function executeInSandbox(
   originalSourceCode?: string
 ): Promise<ExecutionResult> {
   const startTime = performance.now();
-  const { consoleOutput, sandboxConsole } = createSandbox();
+  const { consoleOutput } = createSandbox();
 
   // Extract original line numbers from source code
   const sourceToUse = originalSourceCode || code;
@@ -165,66 +165,94 @@ export async function executeInSandbox(
   const wrappedCode = wrapCodeWithLineTracking(code, originalLineNumbers);
 
   return new Promise((resolve) => {
+    // Create worker inline using Blob
+    const workerCode = `
+      const consoleOutput = [];
+      
+      function formatValue(value) {
+        if (value === null) return "null";
+        if (value === undefined) return "undefined";
+        if (typeof value === "string") return value;
+        if (typeof value === "number" || typeof value === "boolean") return String(value);
+        if (typeof value === "function") return "[Function: " + (value.name || "anonymous") + "]";
+        if (typeof value === "symbol") return value.toString();
+        try {
+          return JSON.stringify(value, null, 2);
+        } catch {
+          return String(value);
+        }
+      }
+      
+      const sandboxConsole = {
+        log: (...args) => consoleOutput.push({ type: "log", content: args.map(formatValue).join(" "), timestamp: Date.now(), line: 0 }),
+        error: (...args) => consoleOutput.push({ type: "error", content: args.map(formatValue).join(" "), timestamp: Date.now(), line: 0 }),
+        warn: (...args) => consoleOutput.push({ type: "warn", content: args.map(formatValue).join(" "), timestamp: Date.now(), line: 0 }),
+        info: (...args) => consoleOutput.push({ type: "info", content: args.map(formatValue).join(" "), timestamp: Date.now(), line: 0 }),
+        table: (data) => consoleOutput.push({ type: "log", content: formatValue(data), timestamp: Date.now(), line: 0 }),
+        dir: (data) => consoleOutput.push({ type: "log", content: formatValue(data), timestamp: Date.now(), line: 0 }),
+        __log: (type, line, ...args) => consoleOutput.push({ type: type, content: args.map(formatValue).join(" "), timestamp: Date.now(), line: line })
+      };
+      
+      self.onmessage = function(e) {
+        const code = e.data;
+        try {
+          const fn = new Function("console", "\\"use strict\\";\\n" + code);
+          fn(sandboxConsole);
+          self.postMessage({ success: true, consoleOutput });
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorStack = error instanceof Error ? error.stack : undefined;
+          self.postMessage({ success: false, consoleOutput, error: { message: errorMessage, stack: errorStack } });
+        }
+      };
+    `;
+
+    const blob = new Blob([workerCode], { type: "application/javascript" });
+    const workerUrl = URL.createObjectURL(blob);
+    const worker = new Worker(workerUrl);
+
+    // Set timeout to terminate worker
     const timeoutId = setTimeout(() => {
+      worker.terminate();
+      URL.revokeObjectURL(workerUrl);
       resolve({
         success: false,
         consoleOutput,
         error: {
-          message: "Execution timed out (5 second limit)",
+          message: "Execution timed out (5 second limit) - possible infinite loop detected",
         },
         executionTime: timeout,
       });
     }, timeout);
 
-    try {
-      const fn = new Function("console", `
-        "use strict";
-        ${wrappedCode}
-      `);
-      fn(sandboxConsole);
-
+    worker.onmessage = (e) => {
       clearTimeout(timeoutId);
+      URL.revokeObjectURL(workerUrl);
+      
+      const { success, consoleOutput: workerOutput, error } = e.data;
+      
       resolve({
-        success: true,
-        consoleOutput,
+        success,
+        consoleOutput: workerOutput || consoleOutput,
+        error,
         executionTime: performance.now() - startTime,
       });
-    } catch (error) {
-      // Try to extract line number from error stack
-      let lineNumber: number | undefined;
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      const errorStack = error instanceof Error ? error.stack : undefined;
-      
-      // Parse line number from stack trace
-      if (errorStack) {
-        const match = errorStack.match(/<anonymous>:(\d+):(\d+)/);
-        if (match) {
-          lineNumber = parseInt(match[1], 10);
-          // Adjust for wrapped code (subtract the wrapper lines)
-          // The wrapper adds "use strict" and some lines, so we need to account for that
-          lineNumber = Math.max(1, lineNumber - 2);
-          
-          // Map back to original line if we have source map info
-          if (originalSourceCode && originalLineNumbers.length > 0) {
-            const originalLines = originalSourceCode.split("\n");
-            if (lineNumber <= originalLines.length) {
-              lineNumber = lineNumber;
-            }
-          }
-        }
-      }
+    };
 
+    worker.onerror = (e) => {
       clearTimeout(timeoutId);
+      URL.revokeObjectURL(workerUrl);
       resolve({
         success: false,
         consoleOutput,
         error: {
-          message: errorMessage,
-          stack: errorStack,
-          line: lineNumber,
+          message: e.message || "Worker error",
+          stack: e.message,
         },
         executionTime: performance.now() - startTime,
       });
-    }
+    };
+
+    worker.postMessage(wrappedCode);
   });
 }
