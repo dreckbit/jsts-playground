@@ -34,6 +34,7 @@ export function usePersistence() {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isInitialLoad = useRef(true);
   const previousThemeRef = useRef(settings.theme);
+  const previousEditorRatioRef = useRef(settings.editorRatio);
   const latestSnapshotRef = useRef<PersistedSnapshot>({ code, language, settings });
 
   const loadState = useCallback(() => {
@@ -119,6 +120,24 @@ export function usePersistence() {
       previousThemeRef.current = settings.theme;
     }
   }, [settings.theme, code, language, settings]);
+
+  // IMMEDIATE save when editorRatio changes - no debounce
+  useEffect(() => {
+    if (isInitialLoad.current) {
+      previousEditorRatioRef.current = settings.editorRatio;
+      return;
+    }
+
+    if (settings.editorRatio !== previousEditorRatioRef.current) {
+      const currentState: SavedState = {
+        code,
+        language,
+        settings,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(currentState));
+      previousEditorRatioRef.current = settings.editorRatio;
+    }
+  }, [settings.editorRatio, code, language, settings]);
 
   useEffect(() => {
     const forceSave = () => {
