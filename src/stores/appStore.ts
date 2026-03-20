@@ -33,6 +33,7 @@ export interface WindowState {
   x: number;
   y: number;
   maximized: boolean;
+  isLoaded: boolean;
 }
 
 export interface AppState {
@@ -66,10 +67,13 @@ console.log("Hello, World!");
 `;
 
 const STORAGE_KEY = "js-ts-playground-state";
+const WINDOW_STATE_KEY = "js-ts-playground-window-state";
 const VALID_THEMES: EditorTheme[] = ["nord", "nord-snow-storm", "vs-dark"];
 
 // Read saved settings from localStorage synchronously at module load time
 function getInitialSettings() {
+  const windowState = getWindowStateFromStorage();
+  
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -83,13 +87,41 @@ function getInitialSettings() {
           editorRatio: typeof settings.editorRatio === "number" 
             ? settings.editorRatio 
             : 50,
+          windowState,
         };
       }
     }
   } catch {
     // ignore parse errors
   }
-  return { theme: "nord" as EditorTheme, editorRatio: 50 };
+  return { theme: "nord" as EditorTheme, editorRatio: 50, windowState };
+}
+
+function getWindowStateFromStorage(): WindowState {
+  try {
+    const saved = localStorage.getItem(WINDOW_STATE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        width: typeof parsed.width === "number" ? parsed.width : 800,
+        height: typeof parsed.height === "number" ? parsed.height : 600,
+        x: typeof parsed.x === "number" ? parsed.x : 100,
+        y: typeof parsed.y === "number" ? parsed.y : 100,
+        maximized: typeof parsed.maximized === "boolean" ? parsed.maximized : false,
+        isLoaded: true,
+      };
+    }
+  } catch {
+    // ignore parse errors
+  }
+  return {
+    width: 800,
+    height: 600,
+    x: 100,
+    y: 100,
+    maximized: false,
+    isLoaded: false,
+  };
 }
 
 const INITIAL_SETTINGS = getInitialSettings();

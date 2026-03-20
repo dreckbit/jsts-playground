@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import Editor from "./components/Editor";
 import Console from "./components/Console";
 import Toolbar from "./components/Toolbar";
@@ -120,54 +122,96 @@ function App() {
     return () => window.removeEventListener("wheel", handleWheel);
   }, [settings.fontSize, updateSettings]);
 
-  // Window size persistence - save on close/resize
+  // Window size persistence using Tauri commands
   useEffect(() => {
-    const STORAGE_KEY = "js-playground-window";
+    const isTauri = (window as unknown as { __TAURI__?: unknown }).__TAURI__ !== undefined;
     
-    const saveWindowState = () => {
+    if (!isTauri) return; // Skip if not running in Tauri
+
+    // Listen for Tauri close event to save state before closing
+    let unlisten: (() => void) | undefined;
+    
+    if (isTauri) {
+      listen("window-closing", () => {
+        saveWindowState();
+      }).then((u) => {
+        unlisten = u;
+      });
+    }
+
+    const saveWindowState = async () => {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          width: window.innerWidth,
-          height: window.innerHeight,
+        const state = await invoke<{
+          width: number;
+          height: number;
+          x: number;
+          y: number;
+          maximized: boolean;
+        }>("get_window_state");
+        
+        localStorage.setItem("js-ts-playground-window-state", JSON.stringify({
+          width: state.width,
+          height: state.height,
+          x: state.x,
+          y: state.y,
+          maximized: state.maximized,
         }));
       } catch {}
     };
 
-    // Save on resize (debounced)
+    // Restore window state on load
+    const restoreWindowState = async () => {
+      try {
+        const saved = localStorage.getItem("js-ts-playground-window-state");
+        if (saved) {
+          const { width, height, x, y, maximized } = JSON.parse(saved);
+          
+          if (maximized) {
+            await invoke("maximize_window");
+          } else {
+            // Only restore if we have valid size
+            if (width > 0 && height > 0) {
+              await invoke("set_window_state", { width, height });
+            }
+            // Restore position if valid
+            if (x >= 0 && y >= 0) {
+              try {
+                await invoke("set_window_state", { x, y });
+              } catch {}
+            }
+          }
+        }
+      } catch {}
+    };
+
+    // Restore on mount
+    restoreWindowState();
+
+    // Save on resize
     let resizeTimeout: ReturnType<typeof setTimeout>;
     const handleResize = () => {
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(saveWindowState, 500);
     };
-
     window.addEventListener("resize", handleResize);
-    
-    // Save periodically while app is running
+
+    // Save periodically
     const periodicSave = setInterval(saveWindowState, 5000);
 
-    // Save before closing - use pagehide which works better
+    // Save before closing
     const handleBeforeUnload = () => {
       saveWindowState();
     };
     window.addEventListener("pagehide", handleBeforeUnload);
-
-    // Restore window size on load
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const { width, height } = JSON.parse(saved);
-        // Small delay to ensure window is ready
-        setTimeout(() => {
-          window.resizeTo(width, height);
-        }, 100);
-      } catch {}
-    }
 
     return () => {
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("pagehide", handleBeforeUnload);
       clearInterval(periodicSave);
       clearTimeout(resizeTimeout);
+      if (unlisten) {
+        unlisten();
+      }
     };
   }, []);
 
