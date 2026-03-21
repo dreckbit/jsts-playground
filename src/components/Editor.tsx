@@ -371,11 +371,11 @@ export default function Editor({ value, language, onChange, settings, onScroll, 
           fontSize: settings.fontSize,
           fontFamily: settings.fontFamily,
           lineNumbers: settings.showLineNumbers ? "on" : "off",
-          scrollBeyondLastLine: false,
+          scrollBeyondLastLine: true,
           automaticLayout: true,
           tabSize: settings.tabSize,
           wordWrap: "on",
-          padding: { top: 10 },
+          padding: { top: 10, bottom: 30 },
           bracketPairColorization: { enabled: false },
         }}
       />
