@@ -16,3 +16,16 @@
   width: 4px !important;
   border-radius: 2px;
 }
+
+/* Custom scrollbar styling for Monaco Editor */
+.container :global(.monaco-scrollable-element)>.scrollbar>.slider {
+  border-radius: 5px;
+}
+
+.container :global(.monaco-scrollable-element > .scrollbar.vertical > .slider) {
+  border-radius: 5px;
+}
+
+.container :global(.monaco-scrollable-element > .scrollbar.horizontal > .slider) {
+  border-radius: 4px;
+}
