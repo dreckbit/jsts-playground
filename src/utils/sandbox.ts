@@ -131,7 +131,7 @@ function wrapCodeWithLineTracking(code: string, originalLineNumbers: number[]): 
 
 export async function executeInSandbox(
   code: string,
-  timeout = 5000,
+  timeout = 10000,
   originalSourceCode?: string
 ): Promise<ExecutionResult> {
   const startTime = performance.now();
@@ -199,7 +199,7 @@ export async function executeInSandbox(
         success: false,
         consoleOutput,
         error: {
-          message: "Execution timed out (5 second limit) - possible infinite loop detected",
+          message: `Execution timed out (${timeout / 1000} second limit) - possible infinite loop detected`,
         },
         executionTime: timeout,
       });

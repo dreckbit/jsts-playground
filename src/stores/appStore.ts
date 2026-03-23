@@ -34,6 +34,7 @@ export interface AppState {
   isExecuting: boolean;
   settings: Settings;
   showSettings: boolean;
+  executionId: number; // Track execution to cancel stale runs
   tsErrors: Array<{
     line: number;
     column: number;
@@ -91,6 +92,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   language: "javascript",
   consoleOutput: [],
   isExecuting: false,
+  executionId: 0,
   showSettings: false,
   tsErrors: [],
   settings: {
@@ -130,10 +132,18 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   runCode: async () => {
     const state = get();
-    if (state.isExecuting) return;
-
+    
+    // Always increment execution ID to track this run
+    const currentExecutionId = state.executionId + 1;
+    set({ executionId: currentExecutionId });
+    
+    // Only clear console if nothing is currently executing
+    // This prevents clearing when edits happen during execution
+    if (!state.isExecuting) {
+      state.clearConsole();
+    }
+    
     state.setExecuting(true);
-    state.clearConsole();
 
     const startTime = performance.now();
     const originalSource = state.code;
@@ -141,8 +151,18 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       let codeToRun = state.code;
 
+      // Check if this execution was cancelled by a newer edit
+      if (get().executionId !== currentExecutionId) {
+        return;
+      }
+
       if (state.language === "typescript") {
         const transpileResult = transpileTypeScript(state.code);
+
+        // Check if this execution was cancelled
+        if (get().executionId !== currentExecutionId) {
+          return;
+        }
 
         if (!transpileResult.success) {
           transpileResult.errors.forEach((error) => {
@@ -162,8 +182,16 @@ export const useAppStore = create<AppState>((set, get) => ({
         codeToRun = transpileResult.output;
       }
 
-      const result = await executeInSandbox(codeToRun, 5000, originalSource);
+      const result = await executeInSandbox(codeToRun, 10000, originalSource);
 
+      // Check if this execution was cancelled
+      if (get().executionId !== currentExecutionId) {
+        return;
+      }
+
+      // Clear console before showing new results (only now we know it's the final run)
+      state.clearConsole();
+      
       result.consoleOutput.forEach((entry) => {
         state.addConsoleEntry(entry);
       });
@@ -184,13 +212,21 @@ export const useAppStore = create<AppState>((set, get) => ({
         timestamp: Date.now(),
       });
     } catch (error) {
+      // Check if this execution was cancelled
+      if (get().executionId !== currentExecutionId) {
+        return;
+      }
+      
       state.addConsoleEntry({
         type: "error",
         content: error instanceof Error ? error.message : String(error),
         timestamp: Date.now(),
       });
     } finally {
-      state.setExecuting(false);
+      // Only reset if this is still the current execution
+      if (get().executionId === currentExecutionId) {
+        state.setExecuting(false);
+      }
     }
   },
 }));
