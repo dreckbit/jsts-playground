@@ -160,6 +160,22 @@ export default function Settings() {
             <span className={styles.rangeValue}>{settings.debounceDelay}ms</span>
           </div>
         </div>
+        <div className={styles.field}>
+          <label className={styles.label}>Execution Timeout</label>
+          <select
+            className={styles.select}
+            value={settings.executionTimeout}
+            onChange={(e) => updateSettings({ executionTimeout: Number(e.target.value) })}
+          >
+            <option value={5000}>5 seconds</option>
+            <option value={10000}>10 seconds</option>
+            <option value={30000}>30 seconds</option>
+            <option value={60000}>1 minute</option>
+            <option value={120000}>2 minutes</option>
+            <option value={0}>No limit</option>
+          </select>
+          <p className={styles.hint}>Stops execution after time limit</p>
+        </div>
       </div>
 
       <div className={styles.section}>

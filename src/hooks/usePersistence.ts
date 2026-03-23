@@ -18,6 +18,7 @@ type PersistedSnapshot = Pick<AppState, "code" | "language" | "settings">;
 
 const DEFAULT_SETTINGS: Settings = {
   debounceDelay: 1000,
+  executionTimeout: 10000,
   showTimestamps: true,
   theme: "nord",
   fontSize: 14,

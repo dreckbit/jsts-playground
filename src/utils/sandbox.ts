@@ -191,19 +191,21 @@ export async function executeInSandbox(
     const workerUrl = URL.createObjectURL(blob);
     const worker = new Worker(workerUrl);
 
-    // Set timeout to terminate worker
-    const timeoutId = setTimeout(() => {
-      worker.terminate();
-      URL.revokeObjectURL(workerUrl);
-      resolve({
-        success: false,
-        consoleOutput,
-        error: {
-          message: `Execution timed out (${timeout / 1000} second limit) - possible infinite loop detected`,
-        },
-        executionTime: timeout,
-      });
-    }, timeout);
+    // Set timeout to terminate worker (skip if timeout is 0 = no limit)
+    const timeoutId: ReturnType<typeof setTimeout> | undefined = timeout > 0
+      ? setTimeout(() => {
+          worker.terminate();
+          URL.revokeObjectURL(workerUrl);
+          resolve({
+            success: false,
+            consoleOutput,
+            error: {
+              message: `Execution timed out (${timeout / 1000} second limit) - possible infinite loop detected`,
+            },
+            executionTime: timeout,
+          });
+        }, timeout)
+      : undefined;
 
     worker.onmessage = (e) => {
       clearTimeout(timeoutId);

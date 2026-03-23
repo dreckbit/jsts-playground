@@ -16,6 +16,7 @@ export interface ConsoleEntry {
 
 export interface Settings {
   debounceDelay: number;
+  executionTimeout: number; // in milliseconds
   showTimestamps: boolean;
   theme: EditorTheme;
   fontSize: number;
@@ -97,6 +98,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   tsErrors: [],
   settings: {
     debounceDelay: 1000,
+    executionTimeout: 10000,
     showTimestamps: true,
     theme: INITIAL_SETTINGS.theme,
     fontSize: 14,
@@ -182,7 +184,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         codeToRun = transpileResult.output;
       }
 
-      const result = await executeInSandbox(codeToRun, 10000, originalSource);
+      const result = await executeInSandbox(codeToRun, state.settings.executionTimeout, originalSource);
 
       // Check if this execution was cancelled
       if (get().executionId !== currentExecutionId) {
