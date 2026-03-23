@@ -117,36 +117,16 @@ function extractConsoleLines(sourceCode: string): number[] {
 
 // Wrap code to capture line numbers for console.* calls
 function wrapCodeWithLineTracking(code: string, originalLineNumbers: number[]): string {
-  const lines = code.split("\n");
-  let originalIndex = 0;
+  let lineNumQueue = [...originalLineNumbers];
   
-  const wrappedLines = lines.map((line) => {
-    // Check if this line corresponds to a console call in original code
-    const hasConsole = /console\.\w+\s*\(/.test(line);
-    
-    if (hasConsole && originalIndex < originalLineNumbers.length) {
-      const originalLine = originalLineNumbers[originalIndex];
-      originalIndex++;
-      
-      // Match console methods
-      const consoleMethods = ["log", "error", "warn", "info", "table", "dir"];
-      
-      for (const method of consoleMethods) {
-        const regex = new RegExp(`(console\\.${method})\\s*\\(`);
-        if (regex.test(line)) {
-          // Replace console.method( with console.__log('method', originalLineNumber,
-          return line.replace(
-            regex,
-            `console.__log('${method}', ${originalLine}, `
-          );
-        }
-      }
+  // Use simple string replace instead of regex to avoid escaping issues
+  return code.replace(
+    /console\.(log|error|warn|info|table|dir)\(/g,
+    (_match: string, method: string) => {
+      const lineNum = lineNumQueue.shift() || 0;
+      return `console.__log('${method}', ${lineNum}, `;
     }
-    
-    return line;
-  });
-  
-  return wrappedLines.join("\n");
+  );
 }
 
 export async function executeInSandbox(
