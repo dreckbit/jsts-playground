@@ -73,6 +73,22 @@
   cursor: pointer;
 }
 
+.select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2388C0D0' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
+}
+
+.select option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
 .select:focus,
 .input:focus {
   outline: none;
@@ -143,6 +159,49 @@
   display: flex;
   gap: 8px;
   margin-top: 8px;
+}
+
+.themeList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.themeItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.themeItem:hover {
+  border-color: var(--accent);
+}
+
+.themeItem.active {
+  border-color: var(--accent);
+  background: var(--bg-tertiary);
+}
+
+.themeColors {
+  display: flex;
+  gap: 4px;
+}
+
+.themeColorBox {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+}
+
+.themeLabel {
+  font-size: 13px;
+  color: var(--text-primary);
 }
 
 .themeOption {

@@ -210,6 +210,49 @@ const MONACO_THEMES: Record<string, MonacoTheme> = {
       "editor.foreground": "#D4D4D4",
     },
   },
+  firefly: {
+    base: "vs-dark",
+    inherit: false,
+    rules: [
+      { token: "", foreground: "b0badd" },
+      { token: "comment", foreground: "626a73", fontStyle: "italic" },
+      { token: "string", foreground: "8496b4" },
+      { token: "keyword", foreground: "a180fd" },
+      { token: "number", foreground: "e6b450" },
+      { token: "function", foreground: "859900" },
+      { token: "variable", foreground: "a8aebd" },
+      { token: "operator", foreground: "ff6600" },
+      { token: "delimiter", foreground: "b3b3b3" },
+      { token: "type", foreground: "39bae6" },
+      { token: "invalid", foreground: "ff0066" },
+    ],
+    colors: {
+      "editor.background": "#0a0f17",
+      "editor.foreground": "#b0badd",
+    },
+  },
+  "firefly-midnight": {
+    base: "vs-dark",
+    inherit: false,
+    rules: [
+      { token: "", foreground: "b3b8c5" },
+      { token: "comment", foreground: "626a73", fontStyle: "italic" },
+      { token: "string", foreground: "a4bd00" },
+      { token: "keyword", foreground: "827db5" },
+      { token: "number", foreground: "e6e600" },
+      { token: "function", foreground: "ff8533" },
+      { token: "variable", foreground: "a8aebd" },
+      { token: "variable.other", foreground: "a8aebd" },
+      { token: "operator", foreground: "ff6600" },
+      { token: "delimiter", foreground: "b3b3b3" },
+      { token: "type", foreground: "39bae6" },
+      { token: "invalid", foreground: "ff0066" },
+    ],
+    colors: {
+      "editor.background": "#151515",
+      "editor.foreground": "#b3b8c5",
+    },
+  },
 };
 
 // Generate console output text with line-aligned entries

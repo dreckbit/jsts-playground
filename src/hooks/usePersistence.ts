@@ -49,7 +49,7 @@ export function usePersistence() {
         const mergedSettings = { ...DEFAULT_SETTINGS, ...parsed.settings };
 
         // Keep user-selected theme if valid; default to nord otherwise
-        const validThemes = ["nord", "nord-snow-storm", "vs-dark"] as const;
+        const validThemes = ["nord", "nord-snow-storm", "vs-dark", "firefly", "firefly-midnight"] as const;
         if (!validThemes.includes(mergedSettings.theme)) {
           mergedSettings.theme = "nord";
         }

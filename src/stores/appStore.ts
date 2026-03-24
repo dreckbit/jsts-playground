@@ -4,7 +4,7 @@ import { executeInSandbox } from "../utils/sandbox";
 
 export type Language = "javascript" | "typescript";
 export type ConsoleEntryType = "log" | "error" | "warn" | "info" | "result" | "time";
-export type EditorTheme = "nord" | "nord-snow-storm" | "vs-dark";
+export type EditorTheme = "nord" | "nord-snow-storm" | "vs-dark" | "firefly" | "firefly-midnight";
 export type LayoutOrientation = "horizontal" | "vertical";
 
 export interface ConsoleEntry {
@@ -60,7 +60,7 @@ console.log("Hello, World!");
 `;
 
 const STORAGE_KEY = "js-ts-playground-state";
-const VALID_THEMES: EditorTheme[] = ["nord", "nord-snow-storm", "vs-dark"];
+const VALID_THEMES: EditorTheme[] = ["nord", "nord-snow-storm", "vs-dark", "firefly", "firefly-midnight"];
 
 // Read saved settings from localStorage synchronously at module load time
 function getInitialSettings() {

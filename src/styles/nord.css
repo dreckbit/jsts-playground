@@ -124,6 +124,60 @@
   --divider-hover: #569CD6;
 }
 
+/* Theme: Firefly */
+[data-theme="firefly"] {
+  --bg-primary: #0a0f17;
+  --bg-secondary: #0e1421;
+  --bg-tertiary: #151515;
+  --bg-hover: #1a212d;
+
+  --text-primary: #b0badd;
+  --text-secondary: #a0a8bd;
+  --text-muted: #626a73;
+
+  --accent-primary: #a180fd;
+  --accent-secondary: #e6b450;
+  --accent-tertiary: #859900;
+
+  --status-error: #ea6c73;
+  --status-warn: #f9af4f;
+  --status-success: #91b362;
+  --status-info: #53bdfa;
+
+  --border-color: #1a212d;
+  --scrollbar-thumb: #2a2a2a;
+  --scrollbar-track: #0a0f17;
+  --divider-color: #1a212d;
+  --divider-hover: #a180fd;
+}
+
+/* Theme: Firefly Midnight */
+[data-theme="firefly-midnight"] {
+  --bg-primary: #151515;
+  --bg-secondary: #20202c;
+  --bg-tertiary: #323044;
+  --bg-hover: #3d3b57;
+
+  --text-primary: #b3b8c5;
+  --text-secondary: #a8aebd;
+  --text-muted: #626a73;
+
+  --accent-primary: #827db5;
+  --accent-secondary: #a4bd00;
+  --accent-tertiary: #39bae6;
+
+  --status-error: #ff3333;
+  --status-warn: #ffb454;
+  --status-success: #91b362;
+  --status-info: #53bdfa;
+
+  --border-color: #0a0a0a;
+  --scrollbar-thumb: #2a2a2a;
+  --scrollbar-track: #151515;
+  --divider-color: #0a0a0a;
+  --divider-hover: #a4bd00;
+}
+
 * {
   margin: 0;
   padding: 0;

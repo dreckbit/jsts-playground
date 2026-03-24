@@ -12,6 +12,8 @@ export default function Settings() {
     { id: "nord", name: "Nord", colors: ["#292E39", "#3B4252", "#88C0D0"] },
     { id: "nord-snow-storm", name: "Snow Storm", colors: ["#ECEFF4", "#E5E9F0", "#D8DEE9"] },
     { id: "vs-dark", name: "VS Dark", colors: ["#1E1E1E", "#252526", "#569CD6"] },
+    { id: "firefly", name: "Firefly", colors: ["#0a0f17", "#a180fd", "#e6b450"] },
+    { id: "firefly-midnight", name: "Firefly Midnight", colors: ["#151515", "#827db5", "#a4bd00"] },
   ];
 
   const presetFonts = [
@@ -47,20 +49,25 @@ export default function Settings() {
 
       <div className={styles.section}>
         <div className={styles.sectionTitle}>Theme</div>
-        <div className={styles.themePreview}>
+        <div className={styles.themeList}>
           {themes.map((theme) => (
             <div
               key={theme.id}
-              className={`${styles.themeOption} ${settings.theme === theme.id ? styles.active : ""}`}
+              className={`${styles.themeItem} ${settings.theme === theme.id ? styles.active : ""}`}
               onClick={() => updateSettings({ theme: theme.id })}
             >
               <div
-                className={styles.themeSwatch}
-                style={{
-                  background: `linear-gradient(135deg, ${theme.colors[0]} 50%, ${theme.colors[1]} 50%)`,
-                }}
-              />
-              <div className={styles.themeName}>{theme.name}</div>
+                className={styles.themeColors}
+              >
+                {theme.colors.map((color, index) => (
+                  <div
+                    key={index}
+                    className={styles.themeColorBox}
+                    style={{ background: color }}
+                  />
+                ))}
+              </div>
+              <span className={styles.themeLabel}>{theme.name}</span>
             </div>
           ))}
         </div>
