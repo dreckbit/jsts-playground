@@ -1,10 +1,23 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAppStore, type EditorTheme, type LayoutOrientation } from "../stores/appStore";
 import styles from "../styles/Settings.module.css";
 
 export default function Settings() {
   const { settings, updateSettings, showSettings } = useAppStore();
   const [customFont, setCustomFont] = useState("");
+  const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setThemeDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   if (!showSettings) return null;
 
@@ -49,27 +62,51 @@ export default function Settings() {
 
       <div className={styles.section}>
         <div className={styles.sectionTitle}>Theme</div>
-        <div className={styles.themeList}>
-          {themes.map((theme) => (
-            <div
-              key={theme.id}
-              className={`${styles.themeItem} ${settings.theme === theme.id ? styles.active : ""}`}
-              onClick={() => updateSettings({ theme: theme.id })}
-            >
-              <div
-                className={styles.themeColors}
-              >
-                {theme.colors.map((color, index) => (
-                  <div
-                    key={index}
-                    className={styles.themeColorBox}
-                    style={{ background: color }}
-                  />
-                ))}
-              </div>
-              <span className={styles.themeLabel}>{theme.name}</span>
+        <div 
+          className={`${styles.themeDropdown} ${themeDropdownOpen ? styles.open : ""}`}
+          ref={dropdownRef}
+        >
+          <div 
+            className={styles.themeDropdownTrigger}
+            onClick={() => setThemeDropdownOpen(!themeDropdownOpen)}
+          >
+            <div className={styles.themeColors}>
+              {themes.find(t => t.id === settings.theme)?.colors.map((color, index) => (
+                <div
+                  key={index}
+                  className={styles.themeColorBox}
+                  style={{ background: color }}
+                />
+              ))}
             </div>
-          ))}
+            <span className={styles.themeLabel}>{themes.find(t => t.id === settings.theme)?.name}</span>
+            <svg className={styles.dropdownArrow} viewBox="0 0 24 24" fill="currentColor">
+              <path d="M7 10l5 5 5-5H7z" />
+            </svg>
+          </div>
+          <div className={styles.themeDropdownMenu}>
+            {themes.map((theme) => (
+              <div
+                key={theme.id}
+                className={`${styles.themeDropdownItem} ${settings.theme === theme.id ? styles.active : ""}`}
+                onClick={() => {
+                  updateSettings({ theme: theme.id });
+                  setThemeDropdownOpen(false);
+                }}
+              >
+                <div className={styles.themeColors}>
+                  {theme.colors.map((color, index) => (
+                    <div
+                      key={index}
+                      className={styles.themeColorBox}
+                      style={{ background: color }}
+                    />
+                  ))}
+                </div>
+                <span className={styles.themeLabel}>{theme.name}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
